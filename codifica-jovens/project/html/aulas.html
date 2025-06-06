@@ -126,6 +126,24 @@
       border-radius: 5px;
     }
 
+    .comment-section {
+      margin-top: 15px;
+    }
+
+    .comment-section textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 5px;
+      border-radius: 4px;
+      background-color: #2c2c2c;
+      color: #fff;
+      border: 1px solid #444;
+    }
+
+    .comment-section button {
+      margin-top: 5px;
+    }
+
     .center-logo {
       text-align: center;
     }
@@ -249,6 +267,12 @@
             <h5>Descrição:</h5>
             <p>Esta aula aborda os conceitos essenciais do Microsoft Word, como formatação de texto, criação de documentos e uso de recursos avançados para produtividade.</p>
           </div>
+          <div class="comment-section" data-video-id="word1">
+            <h5>Comentários</h5>
+            <ul class="comments-list"></ul>
+            <textarea class="comment-input" placeholder="Deixe um comentário"></textarea>
+            <button class="comment-submit">Enviar</button>
+          </div>
         </div>
       </div>
 
@@ -260,6 +284,12 @@
             <h5>Descrição:</h5>
             <p>Aprenda como utilizar as principais funções do Excel, incluindo fórmulas, tabelas dinâmicas e gráficos para análise de dados.</p>
           </div>
+          <div class="comment-section" data-video-id="excel1">
+            <h5>Comentários</h5>
+            <ul class="comments-list"></ul>
+            <textarea class="comment-input" placeholder="Deixe um comentário"></textarea>
+            <button class="comment-submit">Enviar</button>
+          </div>
         </div>
       </div>
 
@@ -270,6 +300,12 @@
           <div class="video-description">
             <h5>Descrição:</h5>
             <p>Explore os fundamentos da realidade virtual e aumentada, com exemplos práticos e aplicações em diferentes áreas.</p>
+          </div>
+          <div class="comment-section" data-video-id="vr1">
+            <h5>Comentários</h5>
+            <ul class="comments-list"></ul>
+            <textarea class="comment-input" placeholder="Deixe um comentário"></textarea>
+            <button class="comment-submit">Enviar</button>
           </div>
         </div>
       </div>
@@ -292,6 +328,39 @@
         e.preventDefault();
         var targetTab = $(this).data('target');
         $('.nav-tabs a[href="' + targetTab + '"]').tab('show');
+      });
+
+      // Carregar e enviar comentários
+      document.querySelectorAll('.comment-section').forEach(function (section) {
+        var videoId = section.getAttribute('data-video-id');
+        var list = section.querySelector('.comments-list');
+        fetch('/api/videos/' + videoId + '/comments')
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            data.forEach(function (c) {
+              var li = document.createElement('li');
+              li.textContent = c.text;
+              list.appendChild(li);
+            });
+          });
+
+        section.querySelector('.comment-submit').addEventListener('click', function () {
+          var textarea = section.querySelector('.comment-input');
+          var text = textarea.value.trim();
+          if (!text) return;
+          fetch('/api/videos/' + videoId + '/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (c) {
+              var li = document.createElement('li');
+              li.textContent = c.text;
+              list.appendChild(li);
+              textarea.value = '';
+            });
+        });
       });
     });
   </script>
