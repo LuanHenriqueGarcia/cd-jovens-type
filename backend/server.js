@@ -1,7 +1,11 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(express.json());
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Professors data
 const professors = [
@@ -30,6 +34,9 @@ const modulos = [
   }
 ];
 
+// In-memory comments storage
+const comments = [];
+
 app.get('/api/professors', (req, res) => {
   res.json(professors);
 });
@@ -40,6 +47,30 @@ app.get('/api/alunos', (req, res) => {
 
 app.get('/api/modulos', (req, res) => {
   res.json(modulos);
+});
+
+// Get comments for a specific video
+app.get('/api/videos/:videoId/comments', (req, res) => {
+  const { videoId } = req.params;
+  const videoComments = comments.filter(c => c.videoId === videoId);
+  res.json(videoComments);
+});
+
+// Add a comment to a video
+app.post('/api/videos/:videoId/comments', (req, res) => {
+  const { videoId } = req.params;
+  const { text } = req.body;
+  if (!text) {
+    return res.status(400).json({ error: 'Text is required' });
+  }
+  const comment = { id: comments.length + 1, videoId, text };
+  comments.push(comment);
+  res.status(201).json(comment);
+});
+
+// Fallback to index.html for SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {
