@@ -1,78 +1,41 @@
 const express = require('express');
+const dotenv = require('dotenv');
 const path = require('path');
+
+// Importa os módulos da nova estrutura
+const initializeDatabase = require('./src/db/database');
+const dataController = require('./src/controllers/dataController');
+const apiRoutes = require('./src/routes/api');
+
+dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
+
 app.use(express.json());
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static frontend files (Caminho corrigido para a pasta 'frontend')
+// O caminho é: backend/ -> .. -> frontend
+const frontendPath = path.join(__dirname, '..', 'frontend');
+app.use(express.static(frontendPath));
 
-// Professors data
-const professors = [
-  { id: 1, nome: 'Eduarda', genero: 'professora', materias: 'Realidade virtual, Robótica e IA', foto: 'img/image.png' },
-  { id: 2, nome: 'Cleber', genero: 'professor', materias: 'Word, Excel e Lógica de programação', foto: 'img/image1.png' }
-];
+// Rotas da API
+app.use('/api', apiRoutes);
 
-// Alunos data
-const alunos = [
-  { id: 1, nome: 'Eduarda', foto: 'img/image.png', email: '-' },
-  { id: 2, nome: 'Cleber', foto: 'img/image1.png', email: '-' },
-  { id: 3, nome: 'Luan', foto: 'img/eu.png', email: 'adasdasdas' },
-  { id: 4, nome: 'Renan', foto: 'img/renan.png', email: 'adasdasdas' },
-  { id: 5, nome: 'Eduarda', foto: 'img/image.png', email: 'adasdasdas' },
-  { id: 6, nome: 'Cleber', foto: 'img/image1.png', email: 'adasdasdas' }
-];
-
-// Modules data
-const modulos = [
-  {
-    id: '1',
-    title: 'Introdução',
-    videos: [
-      { id: 'v1', title: 'Boas vindas', description: 'Apresentação do curso', embedUrl: 'https://www.youtube.com/embed/example1' }
-    ]
-  }
-];
-
-// In-memory comments storage
-const comments = [];
-
-app.get('/api/professors', (req, res) => {
-  res.json(professors);
-});
-
-app.get('/api/alunos', (req, res) => {
-  res.json(alunos);
-});
-
-app.get('/api/modulos', (req, res) => {
-  res.json(modulos);
-});
-
-// Get comments for a specific video
-app.get('/api/videos/:videoId/comments', (req, res) => {
-  const { videoId } = req.params;
-  const videoComments = comments.filter(c => c.videoId === videoId);
-  res.json(videoComments);
-});
-
-// Add a comment to a video
-app.post('/api/videos/:videoId/comments', (req, res) => {
-  const { videoId } = req.params;
-  const { text } = req.body;
-  if (!text) {
-    return res.status(400).json({ error: 'Text is required' });
-  }
-  const comment = { id: comments.length + 1, videoId, text };
-  comments.push(comment);
-  res.status(201).json(comment);
-});
-
-// Fallback to index.html for SPA
+// Fallback para index.html para SPA
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // Serve o index.html da pasta 'frontend'
+    res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// Conecta ao banco de dados e inicia o servidor
+initializeDatabase()
+    .then(db => {
+        dataController.setDatabase(db);
+        app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+        });
+    })
+    .catch(err => {
+        console.error('Falha ao iniciar o servidor devido a erro no banco de dados:', err);
+        process.exit(1);
+    });

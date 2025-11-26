@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .  # O contexto é a raiz do projeto
+      dockerfile: Dockerfile # O Dockerfile está na raiz
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mapeia o código do backend para o contêiner (útil para desenvolvimento)
+      - ./backend:/app/backend
+      # Mapeia o código do frontend para o contêiner
+      - ./frontend:/app/frontend
+    environment:
+      # Variáveis de ambiente
+      - PORT=3000
+      - JWT_SECRET=sua_chave_secreta_muito_segura
+    command: npm start
+    working_dir: /app/backend
