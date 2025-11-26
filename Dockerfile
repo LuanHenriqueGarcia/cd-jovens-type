@@ -12,7 +12,7 @@ RUN npm run build
 WORKDIR /app
 COPY backend ./backend
 WORKDIR /app/backend
-RUN npm ci --omit=dev
+RUN npm install --production
 
 # Estágio de Runtime (Imagem final mais leve)
 FROM node:18-slim
